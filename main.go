@@ -6,21 +6,16 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/antonivlev/gql-server/database"
+	"github.com/antonivlev/gql-server/models"
 	graphql "github.com/graph-gophers/graphql-go"
 	"github.com/graph-gophers/graphql-go/relay"
 )
 
 type RootResolver struct{}
 
-type Link struct {
-	ID          graphql.ID
-	Description string
-	URL         string
-}
-
-var links = []Link{
-	Link{
-		ID:          "link-0",
+var links = []models.Link{
+	models.Link{
 		URL:         "www.bbc.co.uk",
 		Description: "I'm a link!",
 	},
@@ -30,21 +25,26 @@ func (r *RootResolver) Info() (string, error) {
 	return "this is a thing", nil
 }
 
-func (r *RootResolver) Feed() ([]Link, error) {
+func (r *RootResolver) Feed() ([]models.Link, error) {
 	return links, nil
 }
 
 func (r *RootResolver) Post(args struct {
 	Description string
 	URL         string
-}) (Link, error) {
-	newLink := Link{
-		ID:          graphql.ID("link-" + fmt.Sprint(len(links))),
+}) (models.Link, error) {
+	newLink := models.Link{
 		URL:         args.URL,
 		Description: args.Description,
 	}
 	links = append(links, newLink)
-	return newLink, nil
+
+	// this should return the newly created link, with its id
+	dbLink, errCreate := database.CreateLink(newLink)
+	if errCreate != nil {
+		return models.Link{}, errCreate
+	}
+	return *dbLink, nil
 }
 
 var (
@@ -68,6 +68,11 @@ func parseSchema(path string, resolver interface{}) *graphql.Schema {
 }
 
 func main() {
+	errDb := database.SetupDatabase()
+	if errDb != nil {
+		panic(errDb)
+	}
+
 	http.Handle("/query", &relay.Handler{
 		Schema: parseSchema("./schema.graphql", &RootResolver{}),
 	})
