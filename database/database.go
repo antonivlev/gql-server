@@ -42,3 +42,12 @@ func CreateLink(link models.Link) (*models.Link, error) {
 	}
 	return &link, nil
 }
+
+func GetAllLinks() ([]models.Link, error) {
+	links := []models.Link{}
+	result := gormDB.Find(&links)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return links, nil
+}

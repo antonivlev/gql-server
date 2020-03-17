@@ -14,19 +14,12 @@ import (
 
 type RootResolver struct{}
 
-var links = []models.Link{
-	models.Link{
-		URL:         "www.bbc.co.uk",
-		Description: "I'm a link!",
-	},
-}
-
 func (r *RootResolver) Info() (string, error) {
 	return "this is a thing", nil
 }
 
 func (r *RootResolver) Feed() ([]models.Link, error) {
-	return links, nil
+	return database.GetAllLinks()
 }
 
 func (r *RootResolver) Post(args struct {
@@ -37,9 +30,7 @@ func (r *RootResolver) Post(args struct {
 		URL:         args.URL,
 		Description: args.Description,
 	}
-	links = append(links, newLink)
 
-	// this should return the newly created link, with its id
 	dbLink, errCreate := database.CreateLink(newLink)
 	if errCreate != nil {
 		return models.Link{}, errCreate
