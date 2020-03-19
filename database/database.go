@@ -8,6 +8,7 @@ import (
 	"github.com/antonivlev/gql-server/models"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -30,6 +31,7 @@ func SetupDatabase() error {
 
 	// todo: check for migration error
 	db.AutoMigrate(&models.Link{})
+	db.AutoMigrate(&models.User{})
 
 	gormDB = db
 	return nil
@@ -50,4 +52,26 @@ func GetAllLinks() ([]models.Link, error) {
 		return nil, result.Error
 	}
 	return links, nil
+}
+
+func CreateUser(email, password, name string) (*models.User, error) {
+	// todo: check if user with email already exists
+
+	hashedPasswordBytes, errHash := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if errHash != nil {
+		return nil, errHash
+	}
+
+	newUser := models.User{
+		Email:    email,
+		Password: string(hashedPasswordBytes),
+		Name:     name,
+	}
+
+	result := gormDB.Create(&newUser)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return &newUser, nil
 }

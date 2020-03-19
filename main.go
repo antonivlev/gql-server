@@ -7,36 +7,10 @@ import (
 	"net/http"
 
 	"github.com/antonivlev/gql-server/database"
-	"github.com/antonivlev/gql-server/models"
+	"github.com/antonivlev/gql-server/resolvers"
 	graphql "github.com/graph-gophers/graphql-go"
 	"github.com/graph-gophers/graphql-go/relay"
 )
-
-type RootResolver struct{}
-
-func (r *RootResolver) Info() (string, error) {
-	return "this is a thing", nil
-}
-
-func (r *RootResolver) Feed() ([]models.Link, error) {
-	return database.GetAllLinks()
-}
-
-func (r *RootResolver) Post(args struct {
-	Description string
-	URL         string
-}) (models.Link, error) {
-	newLink := models.Link{
-		URL:         args.URL,
-		Description: args.Description,
-	}
-
-	dbLink, errCreate := database.CreateLink(newLink)
-	if errCreate != nil {
-		return models.Link{}, errCreate
-	}
-	return *dbLink, nil
-}
 
 var (
 	// We can pass an option to the schema so we don’t need to
@@ -65,7 +39,7 @@ func main() {
 	}
 
 	http.Handle("/query", &relay.Handler{
-		Schema: parseSchema("./schema.graphql", &RootResolver{}),
+		Schema: parseSchema("./schema.graphql", &resolvers.RootResolver{}),
 	})
 	fmt.Println("serving on 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
