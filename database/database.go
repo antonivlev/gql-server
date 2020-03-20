@@ -5,6 +5,8 @@ TODO: add tests
 package database
 
 import (
+	"errors"
+
 	"github.com/antonivlev/gql-server/models"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -55,7 +57,9 @@ func GetAllLinks() ([]models.Link, error) {
 }
 
 func CreateUser(email, password, name string) (*models.User, error) {
-	// todo: check if user with email already exists
+	if doesUserWithEmailExist(email) {
+		return nil, errors.New("User with email: " + email + " already exists")
+	}
 
 	hashedPasswordBytes, errHash := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if errHash != nil {
@@ -74,4 +78,10 @@ func CreateUser(email, password, name string) (*models.User, error) {
 	}
 
 	return &newUser, nil
+}
+
+func doesUserWithEmailExist(email string) bool {
+	user := models.User{}
+	gormDB.Where("email = ?", email).First(&user)
+	return user.ID != ""
 }
