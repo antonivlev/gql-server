@@ -1,6 +1,7 @@
 package resolvers
 
 import (
+	"github.com/antonivlev/gql-server/auth"
 	"github.com/antonivlev/gql-server/database"
 	"github.com/antonivlev/gql-server/models"
 )
@@ -32,21 +33,40 @@ func (r *RootResolver) Signup(args struct {
 	Password string
 	Name     string
 }) (*AuthPayload, error) {
-	u, errCreate := database.CreateUser(args.Email, args.Password, args.Name)
+	_, errCreate := database.CreateUser(args.Email, args.Password, args.Name)
 	if errCreate != nil {
 		return nil, errCreate
 	}
 
-	payload := &AuthPayload{
-		Token: nil,
-		User:  u,
+	// todo: useless moving around from one struct to another
+	var emailPassword = struct {
+		Email    string
+		Password string
+	}{
+		Email:    args.Email,
+		Password: args.Password,
 	}
-	return payload, nil
+
+	return r.Login(emailPassword)
 }
 
 func (r *RootResolver) Login(args struct {
 	Email    string
 	Password string
 }) (*AuthPayload, error) {
-	return nil, nil
+	u, errAuth := database.GetUserByCredentials(args.Email, args.Password)
+	if errAuth != nil {
+		return nil, errAuth
+	}
+
+	token, errToken := auth.GenerateToken()
+	if errToken != nil {
+		return nil, errToken
+	}
+
+	payload := &AuthPayload{
+		Token: &token,
+		User:  u,
+	}
+	return payload, nil
 }

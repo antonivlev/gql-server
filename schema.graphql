@@ -3,11 +3,13 @@ schema {
 	mutation: Mutation
 }
 
+# queries should not modify the db. executed simultaneously.
 type Query {
 	info: String!
 	feed: [Link!]!
 }
 
+# mutations can modify the db. executed sequentially.
 type Mutation {
 	post(url: String!, description: String!): Link!
 	signup(email: String!, password: String!, name: String!): AuthPayload

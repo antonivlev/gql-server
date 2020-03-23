@@ -71,7 +71,6 @@ func CreateUser(email, password, name string) (*models.User, error) {
 		Password: string(hashedPasswordBytes),
 		Name:     name,
 	}
-
 	result := gormDB.Create(&newUser)
 	if result.Error != nil {
 		return nil, result.Error
@@ -84,4 +83,19 @@ func doesUserWithEmailExist(email string) bool {
 	user := models.User{}
 	gormDB.Where("email = ?", email).First(&user)
 	return user.ID != ""
+}
+
+func GetUserByCredentials(email, password string) (*models.User, error) {
+	user := models.User{}
+	gormDB.Where("email = ?", email).First(&user)
+	if user.ID == "" {
+		return nil, errors.New("no user with email " + email)
+	}
+
+	errCompare := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if errCompare != nil {
+		return nil, errCompare
+	} else {
+		return &user, nil
+	}
 }
