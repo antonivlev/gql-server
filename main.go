@@ -42,6 +42,8 @@ func main() {
 
 	schema := parseSchema("./schema.graphql", &resolvers.RootResolver{})
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
 		type Payload struct {
 			Query         string
 			OperationName string
@@ -61,7 +63,18 @@ func main() {
 		resp := schema.Exec(ctx, payload.Query, payload.OperationName, payload.Variables)
 
 		if len(resp.Errors) > 0 {
-			fmt.Fprintf(w, fmt.Sprintf("Schema.Exec: %+v", resp.Errors))
+			type ErrorResponse struct {
+				Data   interface{} `json:"data"`
+				Errors interface{} `json:"errors"`
+			}
+
+			errResp := ErrorResponse{
+				Data:   resp.Data,
+				Errors: resp.Errors,
+			}
+
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(errResp)
 			return
 		}
 		json, err := json.MarshalIndent(resp, "", "\t")
