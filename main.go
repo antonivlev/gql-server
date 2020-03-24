@@ -1,15 +1,17 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/antonivlev/gql-server/database"
 	"github.com/antonivlev/gql-server/resolvers"
 	graphql "github.com/graph-gophers/graphql-go"
-	"github.com/graph-gophers/graphql-go/relay"
 )
 
 var (
@@ -38,9 +40,39 @@ func main() {
 		panic(errDb)
 	}
 
-	http.Handle("/query", &relay.Handler{
-		Schema: parseSchema("./schema.graphql", &resolvers.RootResolver{}),
+	schema := parseSchema("./schema.graphql", &resolvers.RootResolver{})
+	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
+		type Payload struct {
+			Query         string
+			OperationName string
+			Variables     map[string]interface{}
+		}
+		var payload Payload
+
+		errParse := json.NewDecoder(r.Body).Decode(&payload)
+		if errParse != nil {
+			http.Error(w, errParse.Error(), http.StatusBadRequest)
+			return
+		}
+
+		token := strings.ReplaceAll(r.Header.Get("Authorization"), "Bearer ", "")
+		ctx := context.WithValue(context.Background(), "token", token)
+
+		resp := schema.Exec(ctx, payload.Query, payload.OperationName, payload.Variables)
+
+		if len(resp.Errors) > 0 {
+			fmt.Fprintf(w, fmt.Sprintf("Schema.Exec: %+v", resp.Errors))
+			return
+		}
+		json, err := json.MarshalIndent(resp, "", "\t")
+		if err != nil {
+			log.Printf("json.MarshalIndent: %s", err)
+			return
+		}
+
+		fmt.Fprint(w, string(json))
 	})
-	fmt.Println("serving on 8080")
+
+	log.Println("serving on 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

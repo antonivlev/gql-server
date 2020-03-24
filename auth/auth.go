@@ -11,7 +11,8 @@ import (
 
 func GenerateToken() (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"role": "user",
+		"userID": "some-id-here",
+		"role":   "user",
 	})
 	tokenString, errToken := token.SignedString([]byte("verysecret"))
 	if errToken != nil {

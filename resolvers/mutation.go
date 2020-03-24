@@ -1,15 +1,19 @@
 package resolvers
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/antonivlev/gql-server/auth"
 	"github.com/antonivlev/gql-server/database"
 	"github.com/antonivlev/gql-server/models"
 )
 
-func (r *RootResolver) Post(args struct {
+func (r *RootResolver) Post(ctx context.Context, args struct {
 	Description string
 	URL         string
 }) (models.Link, error) {
+	fmt.Printf("%+v", ctx.Value("token"))
 	newLink := models.Link{
 		URL:         args.URL,
 		Description: args.Description,
