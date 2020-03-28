@@ -63,7 +63,7 @@ func (r *RootResolver) Login(args struct {
 		return nil, errAuth
 	}
 
-	token, errToken := auth.GenerateToken()
+	token, errToken := auth.GenerateToken(u)
 	if errToken != nil {
 		return nil, errToken
 	}

@@ -6,12 +6,14 @@ package auth
 import (
 	"errors"
 
+	"github.com/antonivlev/gql-server/models"
+
 	"github.com/dgrijalva/jwt-go"
 )
 
-func GenerateToken() (string, error) {
+func GenerateToken(user *models.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID": "some-id-here",
+		"userID": user.ID,
 		"role":   "user",
 	})
 	tokenString, errToken := token.SignedString([]byte("verysecret"))
