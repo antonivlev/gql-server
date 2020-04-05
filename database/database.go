@@ -101,7 +101,7 @@ func GetUserByCredentials(email, password string) (*models.User, error) {
 	}
 }
 
-func GetUserFromToken(token string) (*models.User, error) {
+func GetUserByToken(token string) (*models.User, error) {
 	userID := auth.GetUserIDFromToken(token)
 	if userID == "" {
 		return nil, errors.New("Could not determine user from token")

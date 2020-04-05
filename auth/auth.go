@@ -28,12 +28,12 @@ func GetUserIDFromToken(tokenString string) string {
 		return []byte("verysecret"), nil
 	})
 	if err != nil {
-		fmt.Println("GetUserFromToken error: ", err.Error())
+		fmt.Println("GetUserIDFromToken error: ", err.Error())
 		return ""
 	}
 	userID, ok := token.Claims.(jwt.MapClaims)["ID"].(string)
 	if !ok {
-		fmt.Println("GetUserFromToken error: type conversion in claims")
+		fmt.Println("GetUserIDFromToken error: type conversion in claims")
 		return ""
 	}
 	return userID
