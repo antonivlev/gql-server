@@ -6,7 +6,6 @@ import (
 	"github.com/antonivlev/gql-server/auth"
 	"github.com/antonivlev/gql-server/database"
 	"github.com/antonivlev/gql-server/models"
-	"github.com/graph-gophers/graphql-go"
 )
 
 func (r *RootResolver) Post(ctx context.Context, args struct {
@@ -14,12 +13,16 @@ func (r *RootResolver) Post(ctx context.Context, args struct {
 	URL         string
 }) (models.Link, error) {
 	token := ctx.Value("token").(string)
-	posterID := auth.GetUserFromToken(token)
+	poster, errUser := database.GetUserFromToken(token)
+	if errUser != nil {
+		return models.Link{}, errUser
+	}
 
 	newLink := models.Link{
 		URL:         args.URL,
 		Description: args.Description,
-		PostedByID:  graphql.ID(posterID),
+		PostedByID:  poster.ID,
+		PostedBy:    poster,
 	}
 
 	dbLink, errCreate := database.CreateLink(newLink)

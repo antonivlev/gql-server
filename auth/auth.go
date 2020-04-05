@@ -23,7 +23,7 @@ func GenerateToken(user *models.User) (string, error) {
 	return tokenString, nil
 }
 
-func GetUserFromToken(tokenString string) string {
+func GetUserIDFromToken(tokenString string) string {
 	token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte("verysecret"), nil
 	})

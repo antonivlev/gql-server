@@ -20,7 +20,7 @@ type Link {
 	id: ID!
 	description: String!
 	url: String!
-	postedByID: ID!
+	postedBy: User
 }
 
 type AuthPayload {
