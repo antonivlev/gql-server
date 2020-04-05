@@ -7,6 +7,7 @@ package database
 import (
 	"errors"
 
+	"github.com/antonivlev/gql-server/auth"
 	"github.com/antonivlev/gql-server/models"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -98,4 +99,19 @@ func GetUserByCredentials(email, password string) (*models.User, error) {
 	} else {
 		return &user, nil
 	}
+}
+
+func GetUserFromToken(token string) (*models.User, error) {
+	userID := auth.GetUserIDFromToken(token)
+	if userID == "" {
+		return nil, errors.New("Could not determine user from token")
+	}
+
+	var user models.User
+	gormDB.Where("id = ?", userID).Preload("Links").Find(&user)
+	if user.ID == "" {
+		return nil, errors.New("No user with decoded ID from token")
+	}
+
+	return &user, nil
 }
