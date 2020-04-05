@@ -14,7 +14,7 @@ func (r *RootResolver) Post(ctx context.Context, args struct {
 }) (models.Link, error) {
 	token := ctx.Value("token").(string)
 	// put user into ctx instead
-	poster, errUser := database.GetUserFromToken(token)
+	poster, errUser := database.GetUserByToken(token)
 	if errUser != nil {
 		return models.Link{}, errUser
 	}
