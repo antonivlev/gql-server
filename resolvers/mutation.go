@@ -13,6 +13,7 @@ func (r *RootResolver) Post(ctx context.Context, args struct {
 	URL         string
 }) (models.Link, error) {
 	token := ctx.Value("token").(string)
+	// put user into ctx instead
 	poster, errUser := database.GetUserFromToken(token)
 	if errUser != nil {
 		return models.Link{}, errUser
@@ -21,7 +22,6 @@ func (r *RootResolver) Post(ctx context.Context, args struct {
 	newLink := models.Link{
 		URL:         args.URL,
 		Description: args.Description,
-		PostedByID:  poster.ID,
 		PostedBy:    poster,
 	}
 

@@ -50,7 +50,7 @@ func CreateLink(link models.Link) (*models.Link, error) {
 
 func GetAllLinks() ([]models.Link, error) {
 	links := []models.Link{}
-	result := gormDB.Find(&links)
+	result := gormDB.Preload("PostedBy").Find(&links)
 	if result.Error != nil {
 		return nil, result.Error
 	}

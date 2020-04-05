@@ -8,8 +8,8 @@ type Link struct {
 	URL         string
 	// this is for gorm's association
 	PostedByID graphql.ID
-	// this is for the schema, populated only for resolver return value
-	PostedBy *User `gorm:"foreignkey:PostedByID"`
+	// this should be filled automatically by gorm based on PostedByID
+	PostedBy *User
 }
 
 type User struct {
