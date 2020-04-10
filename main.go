@@ -12,6 +12,7 @@ import (
 	"github.com/antonivlev/gql-server/database"
 	"github.com/antonivlev/gql-server/resolvers"
 	graphql "github.com/graph-gophers/graphql-go"
+	"golang.org/x/net/websocket"
 )
 
 var (
@@ -40,9 +41,37 @@ func main() {
 		panic(errDb)
 	}
 
+	var conn *websocket.Conn
+
+	type message struct {
+		Message string `json:"message"`
+	}
+	socket := func(ws *websocket.Conn) {
+		conn = ws
+		for {
+			// allocate our container struct
+			var m message
+			// receive a message using the codec
+			if err := websocket.JSON.Receive(ws, &m); err != nil {
+				log.Println(err)
+			}
+			log.Println("Received message:", m.Message)
+			// send a response
+			m2 := message{"Thanks for the message!"}
+			if err := websocket.JSON.Send(ws, m2); err != nil {
+				log.Println(err)
+			}
+		}
+	}
+	http.Handle("/socket", websocket.Handler(socket))
+
 	schema := parseSchema("./schema.graphql", &resolvers.RootResolver{})
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+
+		if err := websocket.JSON.Send(conn, message{"oi op"}); err != nil {
+			log.Println(err)
+		}
 
 		type Payload struct {
 			Query         string
@@ -86,6 +115,6 @@ func main() {
 		fmt.Fprint(w, string(json))
 	})
 
-	log.Println("serving on 8080")
+	fmt.Println("serving on 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
