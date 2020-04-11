@@ -2,6 +2,7 @@ package resolvers
 
 import (
 	"context"
+	"errors"
 
 	"github.com/antonivlev/gql-server/auth"
 	"github.com/antonivlev/gql-server/database"
@@ -12,7 +13,10 @@ func (r *RootResolver) Post(ctx context.Context, args struct {
 	Description string
 	URL         string
 }) (models.Link, error) {
-	token := ctx.Value("token").(string)
+	token, ok := ctx.Value("token").(string)
+	if !ok {
+		return models.Link{}, errors.New("Post: no token in context")
+	}
 	// put user into ctx instead
 	poster, errUser := database.GetUserByToken(token)
 	if errUser != nil {

@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,6 +10,8 @@ import (
 	"github.com/antonivlev/gql-server/database"
 	"github.com/antonivlev/gql-server/resolvers"
 	graphql "github.com/graph-gophers/graphql-go"
+	"github.com/graph-gophers/graphql-go/relay"
+	"github.com/graph-gophers/graphql-transport-ws/graphqlws"
 )
 
 var (
@@ -41,49 +41,12 @@ func main() {
 	}
 
 	schema := parseSchema("./schema.graphql", &resolvers.RootResolver{})
+	graphQLHandler := graphqlws.NewHandlerFunc(schema, &relay.Handler{Schema: schema})
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		type Payload struct {
-			Query         string
-			OperationName string
-			Variables     map[string]interface{}
-		}
-		var payload Payload
-
-		errParse := json.NewDecoder(r.Body).Decode(&payload)
-		if errParse != nil {
-			http.Error(w, errParse.Error(), http.StatusBadRequest)
-			return
-		}
-
+		// middleware
 		token := strings.ReplaceAll(r.Header.Get("Authorization"), "Bearer ", "")
 		ctx := context.WithValue(context.Background(), "token", token)
-
-		resp := schema.Exec(ctx, payload.Query, payload.OperationName, payload.Variables)
-
-		if len(resp.Errors) > 0 {
-			type ErrorResponse struct {
-				Data   interface{} `json:"data"`
-				Errors interface{} `json:"errors"`
-			}
-
-			errResp := ErrorResponse{
-				Data:   resp.Data,
-				Errors: resp.Errors,
-			}
-
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(errResp)
-			return
-		}
-		json, err := json.MarshalIndent(resp, "", "\t")
-		if err != nil {
-			log.Printf("json.MarshalIndent: %s", err)
-			return
-		}
-
-		fmt.Fprint(w, string(json))
+		graphQLHandler(w, r.WithContext(ctx))
 	})
 
 	log.Println("serving on 8080")
