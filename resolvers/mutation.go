@@ -80,3 +80,7 @@ func (r *RootResolver) Login(args struct {
 	}
 	return payload, nil
 }
+
+func (r *RootResolver) NewLink() (*models.Link, error) {
+	return &models.Link{}, nil
+}
