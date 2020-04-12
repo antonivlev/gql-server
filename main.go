@@ -35,6 +35,9 @@ func parseSchema(path string, resolver interface{}) *graphql.Schema {
 }
 
 func main() {
+	fs := http.FileServer(http.Dir("./public"))
+	http.Handle("/", fs)
+
 	errDb := database.SetupDatabase()
 	if errDb != nil {
 		panic(errDb)
@@ -49,6 +52,6 @@ func main() {
 		graphQLHandler(w, r.WithContext(ctx))
 	})
 
-	log.Println("serving on 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Println("serving on 8081")
+	log.Fatal(http.ListenAndServe(":8081", nil))
 }

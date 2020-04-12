@@ -85,6 +85,7 @@ func (r *RootResolver) Login(args struct {
 	return payload, nil
 }
 
-func (r *RootResolver) NewLink() (*models.Link, error) {
-	return &models.Link{}, nil
+func (r *RootResolver) NewLink() (chan *models.Link, error) {
+	ch := make(chan *models.Link)
+	return ch, nil
 }
