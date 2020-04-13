@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/antonivlev/gql-server/database"
+	"github.com/antonivlev/gql-server/models"
 	"github.com/antonivlev/gql-server/resolvers"
 	graphql "github.com/graph-gophers/graphql-go"
 	"github.com/graph-gophers/graphql-go/relay"
@@ -43,10 +44,14 @@ func main() {
 		panic(errDb)
 	}
 
-	schema := parseSchema("./schema.graphql", &resolvers.RootResolver{})
+	// initalise root resolver
+	res := &resolvers.RootResolver{}
+	res.NewLinks = make(chan *models.Link)
+
+	schema := parseSchema("./schema.graphql", res)
 	graphQLHandler := graphqlws.NewHandlerFunc(schema, &relay.Handler{Schema: schema})
 	http.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
-		// middleware
+		// pass auth token to resolvers
 		token := strings.ReplaceAll(r.Header.Get("Authorization"), "Bearer ", "")
 		ctx := context.WithValue(context.Background(), "token", token)
 		graphQLHandler(w, r.WithContext(ctx))
