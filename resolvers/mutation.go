@@ -3,6 +3,7 @@ package resolvers
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/antonivlev/gql-server/auth"
 	"github.com/antonivlev/gql-server/database"
@@ -33,6 +34,16 @@ func (r *RootResolver) Post(ctx context.Context, args struct {
 	if errCreate != nil {
 		return models.Link{}, errCreate
 	}
+
+	select {
+	case r.NewLinks <- dbLink:
+		// values are being read from r.Events
+		fmt.Println("r.Events: inserted link")
+	default:
+		// no subscribers, link not in channel
+		fmt.Println("r.Events: not inserted")
+	}
+
 	return *dbLink, nil
 }
 
@@ -86,6 +97,6 @@ func (r *RootResolver) Login(args struct {
 }
 
 func (r *RootResolver) NewLink() (chan *models.Link, error) {
-	ch := make(chan *models.Link)
-	return ch, nil
+	fmt.Println("subcribing")
+	return r.NewLinks, nil
 }
