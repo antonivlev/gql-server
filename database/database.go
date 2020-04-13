@@ -5,6 +5,7 @@ TODO: add tests
 package database
 
 import (
+	"context"
 	"errors"
 
 	"github.com/antonivlev/gql-server/auth"
@@ -101,7 +102,7 @@ func GetUserByCredentials(email, password string) (*models.User, error) {
 	}
 }
 
-func GetUserByToken(token string) (*models.User, error) {
+func getUserByToken(token string) (*models.User, error) {
 	userID := auth.GetUserIDFromToken(token)
 	if userID == "" {
 		return nil, errors.New("Could not determine user from token")
@@ -114,4 +115,17 @@ func GetUserByToken(token string) (*models.User, error) {
 	}
 
 	return &user, nil
+}
+
+func GetUser(ctx context.Context) (*models.User, error) {
+	token, ok := ctx.Value("token").(string)
+	if !ok {
+		return nil, errors.New("Post: no token in context")
+	}
+	// put user into ctx instead
+	user, errUser := getUserByToken(token)
+	if errUser != nil {
+		return nil, errUser
+	}
+	return user, nil
 }

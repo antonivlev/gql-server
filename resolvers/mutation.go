@@ -2,24 +2,19 @@ package resolvers
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/antonivlev/gql-server/auth"
 	"github.com/antonivlev/gql-server/database"
 	"github.com/antonivlev/gql-server/models"
+	"github.com/graph-gophers/graphql-go"
 )
 
 func (r *RootResolver) Post(ctx context.Context, args struct {
 	Description string
 	URL         string
 }) (models.Link, error) {
-	token, ok := ctx.Value("token").(string)
-	if !ok {
-		return models.Link{}, errors.New("Post: no token in context")
-	}
-	// put user into ctx instead
-	poster, errUser := database.GetUserByToken(token)
+	poster, errUser := database.GetUser(ctx)
 	if errUser != nil {
 		return models.Link{}, errUser
 	}
@@ -94,4 +89,11 @@ func (r *RootResolver) Login(args struct {
 		User:  u,
 	}
 	return payload, nil
+}
+
+func (r *RootResolver) Vote(
+	ctx context.Context,
+	args struct{ LinkID graphql.ID },
+) (*models.Vote, error) {
+	return &models.Vote{}, nil
 }
