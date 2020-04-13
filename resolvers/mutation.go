@@ -95,8 +95,3 @@ func (r *RootResolver) Login(args struct {
 	}
 	return payload, nil
 }
-
-func (r *RootResolver) NewLink() (chan *models.Link, error) {
-	fmt.Println("subcribing")
-	return r.NewLinks, nil
-}
