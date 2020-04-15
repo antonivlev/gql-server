@@ -47,6 +47,7 @@ func main() {
 	// initalise root resolver
 	res := &resolvers.RootResolver{}
 	res.NewLinks = make(chan *models.Link)
+	res.NewVotes = make(chan *models.Vote)
 
 	schema := parseSchema("./schema.graphql", res)
 	graphQLHandler := graphqlws.NewHandlerFunc(schema, &relay.Handler{Schema: schema})

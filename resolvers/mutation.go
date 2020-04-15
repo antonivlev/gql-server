@@ -33,10 +33,10 @@ func (r *RootResolver) Post(ctx context.Context, args struct {
 	select {
 	case r.NewLinks <- dbLink:
 		// values are being read from r.Events
-		fmt.Println("r.Events: inserted link")
+		fmt.Println("r.NewLinks: inserted link")
 	default:
 		// no subscribers, link not in channel
-		fmt.Println("r.Events: not inserted")
+		fmt.Println("r.Links: link created, not inserted")
 	}
 
 	return *dbLink, nil
@@ -103,6 +103,13 @@ func (r *RootResolver) Vote(
 	dbVote, errCreate := database.CreateVote(voter.ID, args.LinkID)
 	if errCreate != nil {
 		return nil, errCreate
+	}
+
+	select {
+	case r.NewVotes <- dbVote:
+		fmt.Println("r.NewVotes: inserted vote")
+	default:
+		fmt.Println("r.NewVotes: vote created, not inserted")
 	}
 
 	return dbVote, nil

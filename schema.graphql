@@ -6,6 +6,7 @@ schema {
 
 type Subscription {
 	newLink: Link
+	newVote: Vote
 }
 
 # queries should not modify the db. executed simultaneously.
