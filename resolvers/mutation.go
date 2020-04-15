@@ -95,5 +95,15 @@ func (r *RootResolver) Vote(
 	ctx context.Context,
 	args struct{ LinkID graphql.ID },
 ) (*models.Vote, error) {
-	return &models.Vote{}, nil
+	voter, errUser := database.GetUser(ctx)
+	if errUser != nil {
+		return nil, errUser
+	}
+
+	dbVote, errCreate := database.CreateVote(voter.ID, args.LinkID)
+	if errCreate != nil {
+		return nil, errCreate
+	}
+
+	return dbVote, nil
 }

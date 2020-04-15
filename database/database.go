@@ -7,9 +7,11 @@ package database
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/antonivlev/gql-server/auth"
 	"github.com/antonivlev/gql-server/models"
+	"github.com/graph-gophers/graphql-go"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"golang.org/x/crypto/bcrypt"
@@ -33,9 +35,9 @@ func SetupDatabase() error {
 		return errConnect
 	}
 
-	// todo: check for migration error
 	db.AutoMigrate(&models.Link{})
 	db.AutoMigrate(&models.User{})
+	db.AutoMigrate(&models.Vote{})
 
 	gormDB = db
 	return nil
@@ -51,7 +53,11 @@ func CreateLink(link models.Link) (*models.Link, error) {
 
 func GetAllLinks() ([]models.Link, error) {
 	links := []models.Link{}
-	result := gormDB.Preload("PostedBy").Find(&links)
+	result := gormDB.
+		Preload("PostedBy").
+		Preload("Votes").
+		Preload("Votes.User").
+		Find(&links)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -128,4 +134,30 @@ func GetUser(ctx context.Context) (*models.User, error) {
 		return nil, errUser
 	}
 	return user, nil
+}
+
+func CreateVote(voterID, linkID graphql.ID) (*models.Vote, error) {
+	if doesVoteExist(voterID, linkID) {
+		return nil, errors.New("User already voted for this Link")
+	}
+	vote := models.Vote{
+		UserID: voterID,
+		LinkID: linkID,
+	}
+	result := gormDB.Create(&vote)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	var savedVote models.Vote
+	res := gormDB.Preload("User").Preload("Link").Where("id = ?", vote.ID).Find(&savedVote)
+	if res.Error != nil {
+		fmt.Println(res.Error.Error())
+	}
+	return &savedVote, nil
+}
+
+func doesVoteExist(voterID, linkID graphql.ID) bool {
+	// todo: implement
+	return false
 }
