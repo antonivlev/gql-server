@@ -12,12 +12,13 @@
         .then(r => r.json(q))
         .then(data => console.log('data returned:', data));
 
-
+        // web socket message rules
+        // https://github.com/apollographql/subscriptions-transport-ws/blob/v0.9.4/PROTOCOL.md
         let s = {
                 id: '1',
                 type: 'start',
                 payload: {
-                        query: 'subscription { newLink { id } }',
+                        query: 'subscription { newLink { id description } }',
                         variables: null
                 }
         }
