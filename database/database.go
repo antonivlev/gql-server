@@ -51,17 +51,47 @@ func CreateLink(link models.Link) (*models.Link, error) {
 	return &link, nil
 }
 
-func GetAllLinks() ([]models.Link, error) {
+var gqlenumToGorm map[string]string = map[string]string{
+	"url_ASC":          "url asc",
+	"description_DESC": "description desc",
+}
+
+// Returns ordered, filtered and paginated links and total number of links in db
+func GetAllLinks(filter, orderBy *string, skip, first *int32) ([]models.Link, int, error) {
+	filterString := "%%"
+	if filter != nil {
+		filterString = "%" + *filter + "%"
+	}
+
+	orderByStr := "id desc"
+	if orderBy != nil {
+		orderByStr = gqlenumToGorm[*orderBy]
+	}
+
 	links := []models.Link{}
 	result := gormDB.
 		Preload("PostedBy").
 		Preload("Votes").
 		Preload("Votes.User").
+		Order(orderByStr).
+		Where("url LIKE ? OR description LIKE ?", filterString, filterString).
 		Find(&links)
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, 0, result.Error
 	}
-	return links, nil
+
+	var startInd int32 = 0
+	if skip != nil {
+		startInd = *skip
+	}
+	var endInd int32 = int32(len(links))
+	if first != nil {
+		endInd = startInd + *first
+		if endInd >= int32(len(links)) {
+			endInd = int32(len(links))
+		}
+	}
+	return links[startInd:endInd], len(links), nil
 }
 
 func CreateUser(email, password, name string) (*models.User, error) {
